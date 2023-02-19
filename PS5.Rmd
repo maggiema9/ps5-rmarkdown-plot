@@ -1,0 +1,112 @@
+---
+title: "ps5-rmarkdown"
+author: "Maggie"
+date: "2023-02-18"
+output: html_document
+---
+
+```{r, message=FALSE}
+library(tidyverse)
+gapminder <- read_delim("data/gapminder.csv.bz2") 
+```
+
+```{r}
+gapminder %>% 
+  dim()
+```
+```{r}
+gapminder %>% 
+  sample_n(5)
+```
+
+```{r}
+gapminder %>% 
+  summarize(iso2sum = n_distinct(iso2)) %>% 
+  pull(iso2sum)
+
+gapminder %>% 
+  summarize(iso3sum = n_distinct(iso3)) %>% 
+  pull(iso3sum)
+
+gapminder %>% 
+  summarize(n = n_distinct(name)) %>% 
+  pull(n)
+```
+
+iso2 has more names than iso3
+
+```{r}
+gapminder %>% 
+  count(iso2, name,)
+```
+
+```{r}
+gapminder %>% 
+  summarize(mintime = min(time, na.rm = TRUE),
+            maxtime = max(time, na.rm = TRUE)) %>% 
+  pull(mintime, maxtime)
+```
+The max year is 2019, and the min year is 1960. 
+
+
+
+```{r}
+gapminder %>% 
+  select(co2) %>% 
+  summarize(sum(is.na(.)))
+```
+```{r}
+gapminder %>% 
+  select(co2_PC) %>% 
+  summarize(sum(is.na(.)))
+```
+co2_PC(2661) has more missing data than co2(2658).
+
+```{r}
+carbonemission <- gapminder %>% 
+  group_by(co2) %>% 
+  filter(name == "United States of America" |name == "China" | name == "India" |
+           name == "Japan" | name =="Italy") 
+
+ggplot(carbonemission) +
+  geom_col(aes(x = name, y = co2))
+```
+Of these 5 countires, the US has the most carbon emissions, then followed by China. Italy has the least CO2 emissions in 
+comparison to the rest. 
+
+```{r}
+carbonemissionpercap <- gapminder %>% 
+  group_by(co2_PC) %>% 
+  filter(name == "United States of America" |name == "China" | name == "India" |
+           name == "Japan" | name =="Italy") 
+
+ggplot(carbonemissionpercap) +
+  geom_col(aes(x = name, y = co2_PC))
+```
+The **United states** still has the most carbon emissions per capita, meaning that the average person in America 
+will emit more CO2 than the average person of any of the remaining countries. India's CO2 emission per capita 
+is the lowest because they don't emit a lot of CO2 in comparison to the US and China and they have a much higher 
+population among most countries. 
+
+```{r}
+gapminder %>%
+  group_by(region) %>% 
+  summarise(n = mean(co2_PC, na.rm = TRUE))
+  
+```
+The average per capita CO2 emissions _over time_ indicates that the region, Europe has the highest per capita emission (
+if we omit the NA row). Africa is the has the smallest average per capita emission. 
+
+```{r}
+percap <- gapminder %>%
+  group_by(region) %>% 
+  filter(time == 1960 | 2016) %>% 
+  summarise(n = mean(co2_PC, na.rm = TRUE))
+
+ggplot(percap) +
+  geom_bar(aes(x = region), color = time)
+```
+
+
+
+
