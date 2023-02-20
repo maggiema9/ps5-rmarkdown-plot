@@ -38,7 +38,17 @@ iso2 has more names than iso3
 
 ```{r}
 gapminder %>% 
-  distinct(name, iso2)
+  filter(is.na(name)) %>% 
+  group_by(name) %>% 
+  filter(is.na(iso2)) %>% 
+  distinct(iso3)
+``` 
+```{r}
+gapminder %>% 
+  filter(is.na(name)) %>% 
+  group_by(name) %>% 
+  filter(is.na(iso2)) %>% 
+  distinct(iso3)
 ```
 
 ```{r}
