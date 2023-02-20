@@ -8,6 +8,7 @@ output: html_document
 ```{r, message=FALSE}
 library(tidyverse)
 gapminder <- read_delim("data/gapminder.csv.bz2") 
+view(gapminder)
 ```
 
 ```{r}
@@ -37,7 +38,7 @@ iso2 has more names than iso3
 
 ```{r}
 gapminder %>% 
-  count(iso2, name,)
+  distinct(name, iso2)
 ```
 
 ```{r}
@@ -98,15 +99,115 @@ The average per capita CO2 emissions _over time_ indicates that the region, Euro
 if we omit the NA row). Africa is the has the smallest average per capita emission. 
 
 ```{r}
-percap <- gapminder %>%
+gapminder %>%
   group_by(region) %>% 
-  filter(time == 1960 | 2016) %>% 
-  summarise(n = mean(co2_PC, na.rm = TRUE))
-
-ggplot(percap) +
-  geom_bar(aes(x = region), color = time)
+  filter(!is.na(region)) %>% 
+  summarise(meanyear = c(mean1960 = mean(co2_PC[time == 1960], na.rm = TRUE),
+            mean2016 = mean(co2_PC[time == 2016], na.rm = TRUE)),
+            year = c(1960, 2016)) %>% 
+  ggplot(aes(x = region, y = meanyear, fill = factor(year))) +
+    geom_col()
 ```
 
+```{r}
+max3 <- gapminder %>% 
+  group_by(region, name) %>% 
+  filter(!is.na(region)) %>% 
+  summarize(co22016 = co2_PC[time == 2016])  
+  
+```
+```{r}
+gapminder %>% 
+  group_by(name) %>% 
+  filter(time == 1960) %>% 
+  summarize(GDP_PC, lifeExpectancy, totalPopulation, region) %>% 
+  drop_na() %>% 
+  ggplot() +
+  geom_point(aes(x= GDP_PC, y= lifeExpectancy, size = totalPopulation, color = region))
+```
+I plotted country size based on country population beacuse it is not clear what factor we should use to measure country size. 
 
+General patterns that I see is that all countries in Europe have an almost horizontal relationship, meaning that the
+life expectancy is consistent throughout the continent. The largest points are from Asia meaning that they are home to a 
+higher population size. Asia has a lower GDP per capita in general but fluctuate in life expectancy. Africa is clustered 
+in the bottom left corner which indicates they have a low GDP per capita and a low life expectancy. 
 
+```{r}
+gapminder %>% 
+  group_by(name) %>% 
+  filter(time == 2019) %>% 
+  summarize(GDP_PC, lifeExpectancy, totalPopulation, region) %>% 
+  drop_na() %>% 
+  ggplot() +
+  geom_point(aes(x= GDP_PC, y= lifeExpectancy, size = totalPopulation, color = region))
+```
+
+When comparing these two plots, in general there are more countries that have a higher life expectancy. There is similarities
+in that Europe still has a slight horizontal relationship with a higher life expectancy. The curve remains the same between the 
+two plots, so it makes me wonder if the world has really made significant improvements. 
+
+```{r}
+gapminder %>%
+  group_by(region) %>% 
+  filter(!is.na(region)) %>% 
+  summarise(life1960 = mean(lifeExpectancy[time == 1960], na.rm = TRUE),
+            life2019 = mean(lifeExpectancy[time == 2016], na.rm = TRUE))
+  
+```
+yes the results are expected because from this data we can see that the average life expectancy increased for all 5 different regions. 
+The plot indicates that there are more countries with generally higher life expectancies. There is more consistency with the high
+life expectancy.
+
+```{r}
+gapminder %>%
+  group_by(region) %>% 
+  filter(!is.na(region)) %>% 
+  mutate(prev = lag(lifeExpectancy),
+            growth = (lifeExpectancy - prev),
+            avgLEgrowth = mean(growth, na.rm = TRUE)) %>% 
+  summarize(avgLEgrowth)
+
+  
+```
+
+```{r}
+gapminder %>% 
+  group_by(time) %>% 
+  filter(time == 1960 | time == 2019) %>%
+  summarize(GDP_PC, time) %>% 
+  drop_na() %>% 
+  ggplot(aes(x = GDP_PC, fill = factor(time))) +
+  geom_histogram(position = "identity", alpha = 0.8, bins = 30)
+
+```
+This histogram helps see the improvement of GDP per capita. For each value of GDP, there is a 
+higher frequency of it. This shows the overall improvements of GDP between 1960 and 2019.
+
+```{r}
+gapminder %>% 
+  filter(time == 1960) %>% 
+  mutate(rank = rank(-lifeExpectancy)) %>% 
+  filter(name == "United States of America") %>% 
+  summarize(rank)
+  
+```
+```{r}
+gapminder %>% 
+  filter(time == 2019) %>% 
+  mutate(rank = rank(-lifeExpectancy)) %>% 
+  filter(name == "United States of America") %>% 
+  summarize(rank)
+```
+In 1960, the ranking of the US from the top life expectancy is 18, while in 2019 it is 47. 
+  The PS says that the ranking in 1960 should be 17, but I am unsure why I get 18. 
+
+```{r}
+gapminder %>% 
+  filter(time == 2019) %>% 
+  mutate(rank = rank(-lifeExpectancy), 
+         smallerrank = (rank/n_distinct(name))) %>% 
+  filter(name == "United States of America") %>% 
+  summarize(smallerrank)
+```
+this problem set was super confusing/hard for me. I spent a whole day on it and I still didnt finish. 
 
